@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Pencil, LayoutTemplate, MapPin } from 'lucide-react';
+import { ArrowLeft, Pencil, LayoutTemplate, MapPin, Upload } from 'lucide-react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Tabs, type TabItem } from '@/components/ui/Tabs';
 import { MapView } from '@/components/map/MapView';
+import { ImportZonesPanel } from '@/components/zones/ImportZonesPanel';
 import { ZoneThumbnail } from '@/components/map/ZoneThumbnail';
 import { mapboxConfigured } from '@/components/map/mapToken';
 import { useEvent } from '@/hooks/useEvents';
@@ -28,7 +29,7 @@ const DEFAULT_COLORS = [
   '#06B6D4', // cyan
 ];
 
-type Mode = 'draw' | 'template';
+type Mode = 'draw' | 'template' | 'import';
 
 export function ZoneEditorPage() {
   const { id: eventId } = useParams<{ id: string }>();
@@ -50,6 +51,7 @@ export function ZoneEditorPage() {
     () => [
       { id: 'draw', label: 'Draw Custom', icon: <Pencil size={14} /> },
       { id: 'template', label: 'Use Predefined', icon: <LayoutTemplate size={14} />, count: templates.length },
+      { id: 'import', label: 'Import File', icon: <Upload size={14} /> },
     ],
     [templates.length],
   );
@@ -162,6 +164,15 @@ export function ZoneEditorPage() {
         className="mb-4"
       />
 
+      {mode === 'import' && (
+        <ImportZonesPanel
+          eventId={eventId}
+          colors={DEFAULT_COLORS}
+          onImported={() => navigate(`/events/${eventId}/zones`)}
+        />
+      )}
+
+      {mode !== 'import' && (
       <form onSubmit={handleSubmit} className="space-y-6">
         {mode === 'draw' && (
           <Card>
@@ -296,6 +307,7 @@ export function ZoneEditorPage() {
           </Button>
         </div>
       </form>
+      )}
     </div>
   );
 }
