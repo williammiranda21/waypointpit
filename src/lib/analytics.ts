@@ -1,4 +1,4 @@
-import { pointInPolygon } from '@/components/map/geo';
+import { pointInPolygon, polygonBBox } from '@/components/map/geo';
 import type { BoundaryFeature } from '@/lib/boundaries';
 import type { Tables } from '@/lib/database.types';
 
@@ -31,12 +31,20 @@ export function aggregateByBoundary(
     surveyCount: 0,
     submissionIds: [],
   }));
+  // Precompute each polygon's bounding box once so the inner loop can cheaply
+  // reject points that can't possibly be inside before the full ray-cast.
+  const boxes = features.map((f) => polygonBBox(f.geometry));
   const unassigned: Submission[] = [];
 
   for (const s of submissions) {
+    const lng = s.gps_lng;
+    const lat = s.gps_lat;
     let placed = false;
-    for (const a of aggregates) {
-      if (pointInPolygon([s.gps_lng, s.gps_lat], a.feature.geometry)) {
+    for (let i = 0; i < aggregates.length; i++) {
+      const [w, sBox, e, n] = boxes[i];
+      if (lng < w || lng > e || lat < sBox || lat > n) continue;
+      const a = aggregates[i];
+      if (pointInPolygon([lng, lat], a.feature.geometry)) {
         a.personCount += s.person_count;
         a.submissionCount += 1;
         if (s.submission_type === 'survey') a.surveyCount += 1;

@@ -94,6 +94,11 @@ export function MapView({
       center: MIAMI_DADE_CENTER,
       zoom: MIAMI_DADE_ZOOM,
       attributionControl: true,
+      // Perf: skip the symbol cross-fade animation (fewer re-renders while
+      // panning) and don't recompute label collisions across sources.
+      fadeDuration: 0,
+      crossSourceCollisions: false,
+      antialias: false,
     });
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
@@ -150,7 +155,9 @@ export function MapView({
     if (existing) {
       existing.setData(data);
     } else {
-      map.addSource(SOURCE_ID, { type: 'geojson', data });
+      // tolerance: simplify geometry more aggressively than the 0.375 default so
+      // dense layers (e.g. 707 census tracts) ship far fewer vertices to the GPU.
+      map.addSource(SOURCE_ID, { type: 'geojson', data, tolerance: 1.5 });
       map.addLayer({
         id: FILL_LAYER_ID,
         type: 'fill',
@@ -201,6 +208,13 @@ export function MapView({
           map.getCanvas().style.cursor = '';
         });
       }
+    }
+
+    // Labels (symbol collision) are the single most expensive layer. On dense
+    // boundary sets they're unreadable anyway, so only render them when there
+    // are few polygons, or once the user has zoomed in on a dense layer.
+    if (map.getLayer(LABEL_LAYER_ID)) {
+      map.setLayerZoomRange(LABEL_LAYER_ID, polygons.length > 40 ? 11 : 0, 24);
     }
 
     // Update highlight line-width binding
