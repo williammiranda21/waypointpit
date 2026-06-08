@@ -110,11 +110,13 @@ function CountHomeContent({ session }: { session: NonNullable<ReturnType<typeof 
   return (
     <>
       <GeofenceBanner zone={zone} />
-      <div className="relative flex-1 min-h-[60vh]">
+      {/* min-h-0 lets the map shrink to fill only the space between the bar and
+          the button (no fixed 60vh floor that overflowed the screen). */}
+      <div className="relative flex-1 min-h-0">
         <MapView polygons={polygons} markers={markers} className="absolute inset-0" />
       </div>
 
-      <div className="sticky bottom-0 bg-white border-t border-wp-border px-4 py-3">
+      <div className="shrink-0 bg-white border-t border-wp-border px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <Button
           fullWidth
           size="lg"
