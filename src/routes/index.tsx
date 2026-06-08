@@ -17,6 +17,7 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { AnalysisPage } from '@/pages/AnalysisPage';
 import { ExportHubPage } from '@/pages/ExportHubPage';
 import { ExecutiveReportPage } from '@/pages/ExecutiveReportPage';
+import { UserManagementPage } from '@/pages/UserManagementPage';
 import { RedirectHome, RequireAuth } from './guards';
 
 function ProtectedShell() {
@@ -57,6 +58,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
       { path: '/analysis', element: <AnalysisPage /> },
+      { path: '/users', element: <UserManagementPage /> },
       { path: '/export/:eventId/report', element: <ExecutiveReportPage /> },
     ],
   },
@@ -71,16 +73,6 @@ export const router = createBrowserRouter([
       { path: '/events/:id/hotspots', element: <HotspotsPage /> },
       { path: '/events/:id/teams', element: <TeamsPage /> },
       { path: '/events/:id/teams/new', element: <TeamCreatePage /> },
-      {
-        path: '/users',
-        element: (
-          <PlaceholderPage
-            title="User Management"
-            phase="Phase 3"
-            description="Manage CoC users — admins, leads, and volunteers."
-          />
-        ),
-      },
       { path: '/exports', element: <ExportHubPage /> },
       { path: '/export/:eventId', element: <ExportHubPage /> },
       {
