@@ -86,10 +86,17 @@ export function ZoneEditorPage() {
     map.on('draw.delete', syncDrawn);
   };
 
-  // When switching to template mode, clear any drawn-but-unsaved geometry.
+  // Leaving Draw mode unmounts the map (and its MapboxDraw control). Clear any
+  // unsaved geometry and drop the stale ref so returning to Draw re-creates a
+  // fresh control. deleteAll() can throw if the map is already gone — ignore it.
   useEffect(() => {
     if (mode !== 'draw' && drawRef.current) {
-      drawRef.current.deleteAll();
+      try {
+        drawRef.current.deleteAll();
+      } catch {
+        // map already torn down by the conditional render — nothing to clear
+      }
+      drawRef.current = null;
       setDrawn(null);
     }
   }, [mode]);
