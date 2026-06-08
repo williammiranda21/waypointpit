@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { CalendarRange, Plus, ShieldCheck } from 'lucide-react';
+import { CalendarRange, Plus, ShieldCheck, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
@@ -30,7 +30,14 @@ export function EventsListPage() {
     <div className="max-w-6xl">
       <PageHeader
         title="Count Events"
-        description="PIT count events for your CoC. Create one per count night."
+        description={
+          <>
+            PIT count events for your CoC. Create one per count night.{' '}
+            <span className="font-medium text-text-body">
+              Click an event to manage its Zones, Teams, and Hotspots.
+            </span>
+          </>
+        }
         actions={
           <Link to="/events/new">
             <Button>
@@ -78,6 +85,7 @@ export function EventsListPage() {
                   <Th>Status</Th>
                   <Th>Zone Enforcement</Th>
                   <Th className="hidden md:table-cell">Created</Th>
+                  <Th className="text-right">Manage</Th>
                 </tr>
               </thead>
               <tbody>
@@ -109,6 +117,12 @@ export function EventsListPage() {
                     </Td>
                     <Td className="hidden md:table-cell text-text-muted">
                       {formatRelative(e.created_at)}
+                    </Td>
+                    <Td className="text-right">
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap font-medium text-primary">
+                        Open zones &amp; teams
+                        <ChevronRight size={15} />
+                      </span>
                     </Td>
                   </tr>
                 ))}
