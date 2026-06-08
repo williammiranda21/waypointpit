@@ -47,6 +47,12 @@ export type GeoJSONPolygon = {
   type: 'Polygon';
   coordinates: number[][][];
 };
+export type GeoJSONMultiPolygon = {
+  type: 'MultiPolygon';
+  coordinates: number[][][][];
+};
+/** An area geometry that may be a single Polygon or a MultiPolygon (islands). */
+export type GeoJSONAreaGeometry = GeoJSONPolygon | GeoJSONMultiPolygon;
 export type GeoJSONPoint = {
   type: 'Point';
   coordinates: [number, number];

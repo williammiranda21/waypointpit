@@ -1,4 +1,8 @@
+import { cachedLayer, fetchHubLayer } from './fetchSource';
 import { rect, type BoundaryFeature } from './types';
+
+// Miami-Dade County Open Data Portal — "Zip Code" (102 features).
+const HUB_ITEM_ID = 'fee863cb3da0417fa8b5aaf6b671f8a7';
 
 /**
  * Representative subset of Miami-area ZIP codes.
@@ -23,7 +27,7 @@ const ZIPS: Array<{ zip: string; name: string; w: number; s: number; e: number; 
   { zip: '33150', name: 'Liberty City',           w: -80.24, s: 25.83, e: -80.20, n: 25.85 },
 ];
 
-const FEATURES: BoundaryFeature[] = ZIPS.map((z) => ({
+const FALLBACK: BoundaryFeature[] = ZIPS.map((z) => ({
   id: `zip-${z.zip}`,
   name: `${z.zip} · ${z.name}`,
   geometry: rect(z.w, z.s, z.e, z.n),
@@ -31,5 +35,14 @@ const FEATURES: BoundaryFeature[] = ZIPS.map((z) => ({
 }));
 
 export async function loadZipCodes(): Promise<BoundaryFeature[]> {
-  return FEATURES;
+  return cachedLayer(
+    'zip',
+    () =>
+      fetchHubLayer(HUB_ITEM_ID, {
+        idField: 'ZIPCODE',
+        name: (p) => String(p.ZIPCODE ?? p.ZIP ?? '?'),
+        meta: (p) => ({ zip: String(p.ZIPCODE ?? p.ZIP ?? '') }),
+      }),
+    FALLBACK,
+  );
 }

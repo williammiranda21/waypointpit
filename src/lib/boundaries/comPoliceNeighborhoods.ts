@@ -1,12 +1,13 @@
+import { cachedLayer, fetchHubLayer, titleCase } from './fetchSource';
 import { rect, type BoundaryFeature } from './types';
 
+// City of Miami Open Data Portal — "Police Neighborhoods" (13 NET areas).
+const HUB_ITEM_ID = '8ef18f46840e44a2ad330b126a9edfe0';
+
 /**
- * City of Miami Police Department Neighborhood Resource Officer (NRO) areas —
- * the named neighborhoods Miami PD uses for community-policing assignments.
- * The official list of NETs (Neighborhood Enhancement Teams) is similar.
- *
- * Demo polygons: synthetic rectangles placed where each neighborhood sits in
- * the City of Miami footprint.
+ * City of Miami Police neighborhoods (NET areas).
+ * Synthetic fallback rectangles placed where each neighborhood sits in the
+ * City of Miami footprint.
  */
 const NEIGHBORHOODS: Array<{ name: string; w: number; s: number; e: number; n: number }> = [
   { name: 'Downtown',          w: -80.20, s: 25.76, e: -80.17, n: 25.79 },
@@ -26,12 +27,21 @@ const NEIGHBORHOODS: Array<{ name: string; w: number; s: number; e: number; n: n
   { name: 'Grapeland Heights', w: -80.27, s: 25.78, e: -80.24, n: 25.80 },
 ];
 
-const FEATURES: BoundaryFeature[] = NEIGHBORHOODS.map((n) => ({
+const FALLBACK: BoundaryFeature[] = NEIGHBORHOODS.map((n) => ({
   id: `nro-${n.name.toLowerCase().replace(/\s+/g, '-')}`,
   name: n.name,
   geometry: rect(n.w, n.s, n.e, n.n),
 }));
 
 export async function loadComPoliceNeighborhoods(): Promise<BoundaryFeature[]> {
-  return FEATURES;
+  return cachedLayer(
+    'com_police',
+    () =>
+      fetchHubLayer(HUB_ITEM_ID, {
+        idField: 'PDNETID',
+        name: (p) => titleCase(String(p.PDNETNAME ?? 'Neighborhood')),
+        meta: (p) => ({ net_id: Number(p.PDNETID) || 0 }),
+      }),
+    FALLBACK,
+  );
 }

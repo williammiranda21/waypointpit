@@ -1,4 +1,8 @@
+import { cachedLayer, fetchHubLayer } from './fetchSource';
 import { rect, type BoundaryFeature } from './types';
+
+// Miami-Dade County Open Data Portal — "Commission District" (13 districts).
+const HUB_ITEM_ID = '21f56c05380e477ea3008fd527ddafe4';
 
 /**
  * Miami-Dade County Commission Districts — 13 districts.
@@ -25,7 +29,7 @@ const DISTRICTS: Array<{ num: number; name: string; w: number; s: number; e: num
   { num: 13, name: 'District 13 — Hialeah / Miami Lakes', w: -80.55, s: 25.83, e: -80.50, n: 26.00 },
 ];
 
-const FEATURES: BoundaryFeature[] = DISTRICTS.map((d) => ({
+const FALLBACK: BoundaryFeature[] = DISTRICTS.map((d) => ({
   id: `mdc-d${d.num}`,
   name: d.name,
   geometry: rect(d.w, d.s, d.e, d.n),
@@ -33,5 +37,14 @@ const FEATURES: BoundaryFeature[] = DISTRICTS.map((d) => ({
 }));
 
 export async function loadMdcCommission(): Promise<BoundaryFeature[]> {
-  return FEATURES;
+  return cachedLayer(
+    'mdc_commission',
+    () =>
+      fetchHubLayer(HUB_ITEM_ID, {
+        idField: 'ID',
+        name: (p) => `District ${p.ID ?? '?'}${p.COMMNAME ? ` — ${p.COMMNAME}` : ''}`,
+        meta: (p) => ({ district: Number(p.ID) || 0 }),
+      }),
+    FALLBACK,
+  );
 }

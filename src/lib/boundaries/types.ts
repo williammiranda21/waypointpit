@@ -1,4 +1,4 @@
-import type { GeoJSONPolygon } from '@/lib/database.types';
+import type { GeoJSONAreaGeometry, GeoJSONPolygon } from '@/lib/database.types';
 
 export type BoundaryLayerId =
   | 'mdc_commission'
@@ -13,7 +13,8 @@ export interface BoundaryFeature {
   id: string;
   /** Human-readable label shown on the map + tooltip. */
   name: string;
-  geometry: GeoJSONPolygon;
+  /** Polygon or MultiPolygon — real boundaries include islands. */
+  geometry: GeoJSONAreaGeometry;
   /** Layer-specific metadata (district #, ZIP, etc.). */
   meta?: Record<string, string | number>;
 }

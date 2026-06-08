@@ -1,10 +1,15 @@
+import { cachedLayer, fetchArcgisQuery } from './fetchSource';
 import { rect, type BoundaryFeature } from './types';
 
+// US Census TIGERweb — current census tracts for Miami-Dade (STATE 12, COUNTY 086).
+// Authoritative geography for HUD / HMIS reporting (~707 tracts).
+const TIGERWEB_URL =
+  "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Tracts_Blocks/MapServer/0/query" +
+  "?where=STATE%3D%2712%27+AND+COUNTY%3D%27086%27&outFields=GEOID,NAME,TRACT&outSR=4326&f=geojson";
+
 /**
- * Demo census tracts — small grid of synthetic tracts covering the core Miami
- * urban area. Real tract polygons come from the Census Bureau TIGER/Line
- * shapefiles via Miami-Dade GIS; swap this loader to fetch them when wiring
- * production.
+ * Synthetic fallback tracts — small grid covering the core Miami urban area,
+ * used only if the live TIGERweb fetch fails.
  *
  * Tract IDs follow the FIPS pattern 12086-NNNNNN (Florida = 12, Miami-Dade = 086).
  */
@@ -37,5 +42,14 @@ const TRACTS: BoundaryFeature[] = (() => {
 })();
 
 export async function loadCensusTracts(): Promise<BoundaryFeature[]> {
-  return TRACTS;
+  return cachedLayer(
+    'census_tract',
+    () =>
+      fetchArcgisQuery(TIGERWEB_URL, {
+        idField: 'GEOID',
+        name: (p) => String(p.NAME ?? `Tract ${p.TRACT ?? '?'}`),
+        meta: (p) => ({ geoid: String(p.GEOID ?? ''), tract: String(p.TRACT ?? '') }),
+      }),
+    TRACTS,
+  );
 }

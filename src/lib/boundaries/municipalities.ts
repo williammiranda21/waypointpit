@@ -1,4 +1,8 @@
+import { cachedLayer, fetchHubLayer, titleCase } from './fetchSource';
 import { rect, type BoundaryFeature } from './types';
+
+// Miami-Dade County Open Data Portal — "Municipal Boundary" (76 features).
+const HUB_ITEM_ID = '5ece0745e24b4617a49f2e098df8117f_0';
 
 /**
  * Representative subset of Miami-Dade County municipalities.
@@ -27,12 +31,20 @@ const CITIES: Array<{ name: string; w: number; s: number; e: number; n: number }
   { name: 'Bal Harbour',      w: -80.13, s: 25.88, e: -80.11, n: 25.91 },
 ];
 
-const FEATURES: BoundaryFeature[] = CITIES.map((c) => ({
+const FALLBACK: BoundaryFeature[] = CITIES.map((c) => ({
   id: `muni-${c.name.toLowerCase().replace(/\s+/g, '-')}`,
   name: c.name,
   geometry: rect(c.w, c.s, c.e, c.n),
 }));
 
 export async function loadMunicipalities(): Promise<BoundaryFeature[]> {
-  return FEATURES;
+  return cachedLayer(
+    'municipalities',
+    () =>
+      fetchHubLayer(HUB_ITEM_ID, {
+        idField: 'MUNICID',
+        name: (p) => titleCase(String(p.NAME ?? 'Unincorporated')),
+      }),
+    FALLBACK,
+  );
 }

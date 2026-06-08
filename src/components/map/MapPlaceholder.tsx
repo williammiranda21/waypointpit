@@ -1,6 +1,6 @@
 import { Map as MapIcon } from 'lucide-react';
 import type { ChoroplethBucket, HeatmapPoint, MapPolygon } from './MapView';
-import { polygonBBox, unionBBox, type BBox } from './geo';
+import { polygonBBox, toRingSets, unionBBox, type BBox } from './geo';
 import { HOTSPOT_COLORS, markerRadius, type MapMarker } from './markers';
 import { cn } from '@/lib/cn';
 
@@ -86,32 +86,41 @@ export function MapPlaceholder({
         <rect width={VIEW.w} height={VIEW.h} fill="url(#grid)" />
 
         {polygons.map((p) => {
-          const points = p.geometry.coordinates[0]
-            .map(([lng, lat]) => projectXY(lng, lat, bbox))
-            .map(([x, y]) => `${x},${y}`)
-            .join(' ');
+          // One outer ring per sub-polygon (Polygon → 1, MultiPolygon → N).
+          const outerRings = toRingSets(p.geometry).map((rs) => rs[0]);
           const bucket = bucketById.get(p.id);
           const fill = bucket?.fillColor ?? p.color;
           const fillOpacity = bucket?.fillOpacity ?? (bucket ? 0.55 : 0.22);
           const isHighlighted = p.id === highlightId;
+          // Label the largest ring so MultiPolygons aren't labeled on a tiny island.
+          const labelRing = outerRings.reduce(
+            (best, r) => (r.length > best.length ? r : best),
+            outerRings[0] ?? [],
+          );
           return (
             <g
               key={p.id}
               style={{ cursor: onPolygonClick ? 'pointer' : 'default' }}
               onClick={onPolygonClick ? () => onPolygonClick(p.id) : undefined}
             >
-              <polygon
-                points={points}
-                fill={fill}
-                fillOpacity={fillOpacity}
-                stroke={p.color}
-                strokeWidth={isHighlighted ? 3 : 1.5}
-                strokeLinejoin="round"
-              />
-              {p.name && (
+              {outerRings.map((ring, ri) => (
+                <polygon
+                  key={ri}
+                  points={ring
+                    .map(([lng, lat]) => projectXY(lng, lat, bbox))
+                    .map(([x, y]) => `${x},${y}`)
+                    .join(' ')}
+                  fill={fill}
+                  fillOpacity={fillOpacity}
+                  stroke={p.color}
+                  strokeWidth={isHighlighted ? 3 : 1.5}
+                  strokeLinejoin="round"
+                />
+              ))}
+              {p.name && labelRing.length > 0 && (
                 <text
-                  x={centerOfPolygon(p.geometry.coordinates[0], bbox).x}
-                  y={centerOfPolygon(p.geometry.coordinates[0], bbox).y}
+                  x={centerOfPolygon(labelRing, bbox).x}
+                  y={centerOfPolygon(labelRing, bbox).y}
                   textAnchor="middle"
                   dominantBaseline="central"
                   fontSize="10"

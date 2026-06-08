@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl, { type Map as MapboxMap, type LngLatBoundsLike } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import type { GeoJSONPolygon } from '@/lib/database.types';
+import type { GeoJSONAreaGeometry } from '@/lib/database.types';
 import { MIAMI_DADE_CENTER, MIAMI_DADE_ZOOM, mapboxConfigured, mapboxToken } from './mapToken';
 import { polygonBBox, unionBBox, type BBox } from './geo';
 import { MapPlaceholder } from './MapPlaceholder';
@@ -14,7 +14,7 @@ if (mapboxConfigured) {
 export interface MapPolygon {
   id: string;
   name?: string;
-  geometry: GeoJSONPolygon;
+  geometry: GeoJSONAreaGeometry;
   color: string;
 }
 
