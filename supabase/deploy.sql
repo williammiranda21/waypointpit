@@ -836,7 +836,7 @@ ALTER TABLE count_events
 ------------------------------------------------------------------------------
 INSERT INTO organizations (id, name, coc_code, city, state)
 VALUES (
-  '00000000-0000-0000-0000-000000000fl6',
+  '00000000-0000-0000-0000-000000000600',
   'Miami-Dade County Homeless Trust',
   'FL-600',
   'Miami',
@@ -986,7 +986,7 @@ INSERT INTO zone_templates (name, geometry, default_color, org_id) VALUES
 --   INSERT INTO profiles (id, org_id, full_name, email, role)
 --   VALUES (
 --     '<auth-user-id>',
---     '00000000-0000-0000-0000-000000000fl6',
+--     '00000000-0000-0000-0000-000000000600',
 --     'Your Name',
 --     'you@example.org',
 --     'super_admin'

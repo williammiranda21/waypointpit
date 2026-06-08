@@ -45,7 +45,7 @@ The app expects every signed-in user to have a `profiles` row. Bootstrap yours:
    INSERT INTO profiles (id, org_id, full_name, email, role)
    VALUES (
      '<paste-auth-user-UID>',
-     '00000000-0000-0000-0000-000000000fl6',  -- FL-600 org from the seed
+     '00000000-0000-0000-0000-000000000600',  -- FL-600 org from the seed
      'William Miranda',
      'you@miamidade.gov',
      'coc_admin'   -- or 'super_admin'
