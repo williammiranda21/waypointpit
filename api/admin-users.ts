@@ -70,6 +70,11 @@ export default async function handler(req: any, res: any) {
       res.status(200).json({ ok: true });
       return;
     }
+    if (action === 'update') {
+      await handleUpdate(admin, body, caller);
+      res.status(200).json({ ok: true });
+      return;
+    }
     if (action === 'delete') {
       await handleDelete(admin, body, caller, callerId);
       res.status(200).json({ ok: true });
@@ -140,6 +145,45 @@ async function handleInvite(admin: SupabaseClient, body: any, caller: Caller) {
   });
   if (error) throw error;
   await insertProfile(admin, data.user.id, body, caller);
+}
+
+async function handleUpdate(admin: SupabaseClient, body: any, caller: Caller) {
+  const id = body.id;
+  if (!id) throw new Error('User id is required.');
+
+  const { data: target } = await admin
+    .from('profiles')
+    .select('org_id')
+    .eq('id', id)
+    .maybeSingle();
+  if (!target) throw new Error('User not found.');
+  if (caller.role !== 'super_admin' && target.org_id !== caller.org_id) {
+    throw new Error('You can only edit users in your own organization.');
+  }
+  if (body.role) assertAssignable(body.role, caller);
+  if (body.password && String(body.password).length < 8) {
+    throw new Error('New password must be at least 8 characters.');
+  }
+
+  // Auth-level changes (email / password) need the admin API.
+  const authPatch: { email?: string; password?: string } = {};
+  if (body.email) authPatch.email = body.email;
+  if (body.password) authPatch.password = body.password;
+  if (Object.keys(authPatch).length > 0) {
+    const { error } = await admin.auth.admin.updateUserById(id, authPatch);
+    if (error) throw error;
+  }
+
+  // Profile row (mirrors email + holds name/role/language).
+  const profilePatch: Record<string, string> = {};
+  if (typeof body.fullName === 'string' && body.fullName.trim()) profilePatch.full_name = body.fullName.trim();
+  if (body.email) profilePatch.email = body.email;
+  if (body.role) profilePatch.role = body.role;
+  if (body.preferredLanguage) profilePatch.preferred_language = body.preferredLanguage === 'es' ? 'es' : 'en';
+  if (Object.keys(profilePatch).length > 0) {
+    const { error } = await admin.from('profiles').update(profilePatch).eq('id', id);
+    if (error) throw error;
+  }
 }
 
 async function handleDelete(admin: SupabaseClient, body: any, caller: Caller, callerId: string) {

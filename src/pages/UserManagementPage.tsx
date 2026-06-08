@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { UserPlus, Mail, KeyRound, Trash2, Loader2, X, RefreshCw } from 'lucide-react';
+import { UserPlus, Mail, KeyRound, Trash2, Loader2, X, RefreshCw, Pencil } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -10,9 +10,11 @@ import {
   useUsers,
   useCreateUser,
   useInviteUser,
+  useEditUser,
   useUpdateUserRole,
   useDeleteUser,
 } from '@/hooks/useUsers';
+import type { UserRow } from '@/lib/db/userAdmin';
 import { toast } from '@/stores/toastStore';
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -47,6 +49,7 @@ export function UserManagementPage() {
   const deleteMutation = useDeleteUser();
 
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<UserRow | null>(null);
   const [mode, setMode] = useState<Mode>('create');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -286,16 +289,26 @@ export function UserManagementPage() {
                             </select>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            type="button"
-                            disabled={isSelf || deleteMutation.isPending}
-                            onClick={() => handleDelete(u.id, u.full_name)}
-                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-status-alert hover:bg-red-50 disabled:opacity-40 disabled:hover:bg-transparent"
-                            title={isSelf ? 'You cannot remove yourself' : 'Remove user'}
-                          >
-                            <Trash2 size={14} /> Remove
-                          </button>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setEditing(u)}
+                              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-text-muted hover:bg-gray-100 hover:text-text-primary"
+                              title="Edit user"
+                            >
+                              <Pencil size={14} /> Edit
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isSelf || deleteMutation.isPending}
+                              onClick={() => handleDelete(u.id, u.full_name)}
+                              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-status-alert hover:bg-red-50 disabled:opacity-40 disabled:hover:bg-transparent"
+                              title={isSelf ? 'You cannot remove yourself' : 'Remove user'}
+                            >
+                              <Trash2 size={14} /> Remove
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -310,6 +323,159 @@ export function UserManagementPage() {
       {isFetching && !isLoading && (
         <p className="mt-2 text-xs text-text-muted">Refreshing…</p>
       )}
+
+      {editing && (
+        <EditUserModal
+          user={editing}
+          assignableRoles={assignableRoles}
+          onClose={() => setEditing(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+interface EditUserModalProps {
+  user: UserRow;
+  assignableRoles: Role[];
+  onClose: () => void;
+}
+
+function EditUserModal({ user, assignableRoles, onClose }: EditUserModalProps) {
+  const me = useAuthStore((s) => s.user);
+  const isSelf = user.id === me?.id;
+  const editMutation = useEditUser();
+  const [fullName, setFullName] = useState(user.full_name);
+  const [email, setEmail] = useState(user.email);
+  const [role, setRole] = useState<Role>(user.role as Role);
+  const [language, setLanguage] = useState<'en' | 'es'>(user.preferred_language === 'es' ? 'es' : 'en');
+  const [newPassword, setNewPassword] = useState('');
+  const [err, setErr] = useState<string | null>(null);
+
+  const save = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setErr(null);
+    if (!fullName.trim()) {
+      setErr('Name is required.');
+      return;
+    }
+    if (newPassword && newPassword.length < 8) {
+      setErr('New password must be at least 8 characters.');
+      return;
+    }
+    try {
+      await editMutation.mutateAsync({
+        id: user.id,
+        fullName,
+        role,
+        preferredLanguage: language,
+        email: email.trim(),
+        emailChanged: email.trim() !== user.email,
+        newPassword: newPassword || undefined,
+      });
+      toast({ tone: 'success', message: `Updated ${fullName.trim()}.` });
+      onClose();
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : 'Could not update the user.');
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg bg-white rounded-2xl shadow-lg p-5 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-base font-semibold text-text-primary">Edit user</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded p-1 text-text-muted hover:bg-gray-100"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <form onSubmit={save} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-text-body mb-1.5">Full name</label>
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-body mb-1.5">Email</label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-body mb-1.5">Role</label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as Role)}
+                disabled={isSelf}
+                className="block w-full rounded-lg border border-gray-200 bg-gray-50 px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+              >
+                {assignableRoles.map((r) => (
+                  <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+                ))}
+              </select>
+              {isSelf && (
+                <p className="mt-1 text-[11px] text-text-muted">You can&rsquo;t change your own role.</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-body mb-1.5">Preferred language</label>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as 'en' | 'es')}
+                className="block w-full rounded-lg border border-gray-200 bg-gray-50 px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="en">English</option>
+                <option value="es">Español</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-body mb-1.5">
+              Reset password <span className="font-normal text-text-muted">(optional)</span>
+            </label>
+            <div className="flex gap-2">
+              <Input
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Leave blank to keep current"
+              />
+              <Button type="button" variant="secondary" onClick={() => setNewPassword(randomPassword())}>
+                <RefreshCw size={14} /> Generate
+              </Button>
+            </div>
+            <p className="mt-1 text-[11px] text-text-muted">
+              Changing the email or password requires the server function (SUPABASE_SERVICE_ROLE_KEY).
+            </p>
+          </div>
+
+          {err && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-status-alert" role="alert">
+              {err}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button type="submit" disabled={editMutation.isPending}>
+              {editMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
+              Save changes
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

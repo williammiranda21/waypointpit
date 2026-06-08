@@ -13,6 +13,18 @@ export interface NewUserInput {
   password?: string;
 }
 
+export interface EditUserInput {
+  id: string;
+  fullName: string;
+  role: Role;
+  preferredLanguage: 'en' | 'es';
+  email: string;
+  /** True when email differs from the stored value (needs the auth admin API). */
+  emailChanged: boolean;
+  /** Optional reset; blank means leave unchanged. */
+  newPassword?: string;
+}
+
 // -----------------------------------------------------------------------------
 // Reads + role updates — client-side under RLS (admin policies allow these).
 // -----------------------------------------------------------------------------
@@ -77,6 +89,33 @@ export async function inviteUser(input: NewUserInput): Promise<void> {
   });
 }
 
+export async function editUser(input: EditUserInput): Promise<void> {
+  if (!supabaseConfigured) return demoEdit(input);
+
+  // Email/password are auth-level — route through the service-role function.
+  // Name/role/language alone can update the profile directly under RLS.
+  if (input.emailChanged || input.newPassword) {
+    await callAdmin('update', {
+      id: input.id,
+      email: input.email.trim(),
+      password: input.newPassword || undefined,
+      fullName: input.fullName.trim(),
+      role: input.role,
+      preferredLanguage: input.preferredLanguage,
+    });
+    return;
+  }
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      full_name: input.fullName.trim(),
+      role: input.role,
+      preferred_language: input.preferredLanguage,
+    })
+    .eq('id', input.id);
+  if (error) throw error;
+}
+
 export async function deleteUser(id: string): Promise<void> {
   if (!supabaseConfigured) {
     demoWrite(demoList().filter((u) => u.id !== id));
@@ -121,6 +160,22 @@ function demoList(): UserRow[] {
 function demoWrite(rows: UserRow[]): void {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(DEMO_KEY, JSON.stringify(rows));
+}
+
+function demoEdit(input: EditUserInput): void {
+  demoWrite(
+    demoList().map((u) =>
+      u.id === input.id
+        ? {
+            ...u,
+            full_name: input.fullName,
+            role: input.role,
+            preferred_language: input.preferredLanguage,
+            email: input.email,
+          }
+        : u,
+    ),
+  );
 }
 
 function demoCreate(input: NewUserInput): void {

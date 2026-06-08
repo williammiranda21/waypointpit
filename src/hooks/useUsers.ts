@@ -2,9 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createUser,
   deleteUser,
+  editUser,
   inviteUser,
   listUsers,
   updateUserRole,
+  type EditUserInput,
   type NewUserInput,
 } from '@/lib/db/userAdmin';
 import type { Role } from '@/stores/authStore';
@@ -27,6 +29,14 @@ export function useInviteUser() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: NewUserInput) => inviteUser(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: usersKey }),
+  });
+}
+
+export function useEditUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: EditUserInput) => editUser(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: usersKey }),
   });
 }
