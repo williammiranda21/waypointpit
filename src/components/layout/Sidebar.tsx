@@ -52,7 +52,13 @@ const sections: NavSection[] = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  /** Mobile drawer open state (ignored on lg+, where the sidebar is always shown). */
+  mobileOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
@@ -71,12 +77,27 @@ export function Sidebar() {
   };
 
   return (
-    <aside
-      className={cn(
-        'fixed inset-y-0 left-0 z-30 flex flex-col bg-sidebar-bg text-gray-200 transition-[width] duration-200',
-        collapsed ? 'w-16' : 'w-64',
+    <>
+      {/* Mobile backdrop — tap to dismiss the drawer. */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          onClick={onClose}
+          aria-hidden
+        />
       )}
-    >
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-40 flex flex-col bg-sidebar-bg text-gray-200',
+          'transition-transform duration-200 lg:transition-[width]',
+          // Mobile: full-width drawer that slides in/out. Desktop: always visible,
+          // honoring the collapse toggle.
+          'w-64',
+          collapsed ? 'lg:w-16' : 'lg:w-64',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full',
+          'lg:translate-x-0',
+        )}
+      >
       <div
         className={cn(
           'flex h-14 items-center px-4',
@@ -95,7 +116,7 @@ export function Sidebar() {
       <button
         type="button"
         onClick={() => setCollapsed((c) => !c)}
-        className="absolute top-16 -right-3 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-text-muted shadow-sm hover:text-text-primary hover:border-gray-300"
+        className="absolute top-16 -right-3 z-10 hidden lg:inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-text-muted shadow-sm hover:text-text-primary hover:border-gray-300"
         aria-label="Toggle sidebar"
       >
         {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
@@ -113,6 +134,7 @@ export function Sidebar() {
                   key={item.to}
                   to={item.to}
                   end={item.to === '/dashboard'}
+                  onClick={() => onClose?.()}
                   className={({ isActive }) =>
                     cn('wp-nav-item my-0.5', isActive && 'wp-nav-item--active', collapsed && 'justify-center')
                   }
@@ -153,6 +175,7 @@ export function Sidebar() {
           )}
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

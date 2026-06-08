@@ -1,4 +1,4 @@
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { useOfflineQueueStore } from '@/stores/offlineQueueStore';
@@ -6,9 +6,11 @@ import { cn } from '@/lib/cn';
 
 interface TopBarProps {
   hasNotifications?: boolean;
+  /** Opens the mobile nav drawer (only shown below lg). */
+  onMenuClick?: () => void;
 }
 
-export function TopBar({ hasNotifications = false }: TopBarProps) {
+export function TopBar({ hasNotifications = false, onMenuClick }: TopBarProps) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const connectivity = useOfflineQueueStore((s) => s.connectivity);
@@ -42,7 +44,15 @@ export function TopBar({ hasNotifications = false }: TopBarProps) {
           : t('status.online');
 
   return (
-    <header className="sticky top-0 z-20 h-14 bg-white border-b border-gray-100 flex items-center px-4 gap-4">
+    <header className="sticky top-0 z-20 h-14 bg-white border-b border-gray-100 flex items-center px-4 gap-3">
+      <button
+        type="button"
+        onClick={onMenuClick}
+        className="lg:hidden -ml-1 p-2 rounded-md text-text-muted hover:bg-gray-100"
+        aria-label="Open menu"
+      >
+        <Menu size={20} />
+      </button>
       <div className="flex-1 max-w-2xl relative">
         <Search
           size={16}
