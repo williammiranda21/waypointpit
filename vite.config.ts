@@ -61,6 +61,14 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         navigateFallback: '/index.html',
+        // Don't serve the SPA shell for API calls (e.g. the AI proxy).
+        navigateFallbackDenylist: [/^\/api\//],
+        // Take control immediately on a new deploy instead of waiting for every
+        // tab to close — otherwise a returning user can be stranded on a stale
+        // (and possibly broken) cached shell. Pairs with registerType:autoUpdate.
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         // App bundle includes Mapbox + React Query + i18n + draw tools — comfortably
         // larger than the 2 MiB default. Bump the precache cap so the field PWA
         // can install fully offline.
