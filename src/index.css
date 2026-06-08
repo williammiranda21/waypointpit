@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-page-bg text-text-body font-sans antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-text-primary;
+  }
+}
+
+@layer components {
+  /* Sidebar nav item active pill — matches Waypoint HMIS */
+  .wp-nav-item {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-300
+           hover:text-white hover:bg-gray-800 transition-colors;
+  }
+  .wp-nav-item--active {
+    @apply bg-primary text-white hover:bg-primary hover:text-white;
+  }
+  .wp-section-label {
+    @apply text-xs font-semibold uppercase tracking-wider text-gray-500 px-3 mt-6 mb-2;
+  }
+}
+
+/* Hide scrollbars in dark sidebar but keep scroll working */
+.wp-sidebar-scroll::-webkit-scrollbar { width: 6px; }
+.wp-sidebar-scroll::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }

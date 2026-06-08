@@ -1,0 +1,142 @@
+{
+  "app": {
+    "name": "Waypoint PIT",
+    "tagline": "PIT Count App"
+  },
+  "login": {
+    "welcome": "Welcome to Waypoint",
+    "subtitle": "Waypoint PIT — PIT Count App",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "you@example.org",
+    "passwordPlaceholder": "Enter your password",
+    "signIn": "Sign In",
+    "signingIn": "Signing in…",
+    "forgotPassword": "Forgot your password?",
+    "footer": "Miami-Dade County Homeless Trust · FL-600"
+  },
+  "nav": {
+    "sectionAdmin": "Admin",
+    "sectionField": "Field",
+    "dashboard": "Dashboard",
+    "events": "Count Events",
+    "users": "Users",
+    "myCount": "My Count",
+    "submissions": "My Submissions",
+    "exports": "Exports",
+    "analysis": "Analysis",
+    "profile": "Profile",
+    "logout": "Log out"
+  },
+  "topbar": {
+    "search": "Search…",
+    "searchHint": "Ctrl+K"
+  },
+  "actions": {
+    "addObservation": "Add Observation",
+    "save": "Save",
+    "cancel": "Cancel",
+    "next": "Next",
+    "back": "Back",
+    "submit": "Submit",
+    "continue": "Continue"
+  },
+  "status": {
+    "online": "Online",
+    "offline": "Offline",
+    "syncing": "Syncing…",
+    "synced": "Synced",
+    "draft": "Draft",
+    "active": "Active",
+    "closed": "Closed"
+  },
+  "pwa": {
+    "installTitle": "Add Waypoint PIT to your home screen",
+    "installBody": "Install Waypoint PIT for the best experience tonight.",
+    "install": "Install",
+    "notNow": "Not now"
+  },
+  "volunteer": {
+    "noActiveSession": "No active count event",
+    "noActiveSessionDescription": "Your CoC Admin will assign you to a team when a count event goes active.",
+    "team": "Team",
+    "zone": "Zone",
+    "geofenceOutside": "You've left {{zone}}. Submissions captured here will be flagged.",
+    "geofenceInside": "You're in {{zone}}.",
+    "geofenceWaiting": "Waiting for GPS…",
+    "menu": "Menu"
+  },
+  "submission": {
+    "chooseType": "What are you logging?",
+    "quickTallyTitle": "Quick Tally",
+    "quickTallyDescription": "Headcount for a group.",
+    "surveyTitle": "Individual Survey",
+    "surveyDescription": "More detail for one person.",
+    "personCount": "Person count",
+    "locationType": "Location",
+    "gps": {
+      "captured": "Location captured",
+      "waiting": "Waiting for GPS…",
+      "denied": "Location permission denied — enable it in your browser settings."
+    },
+    "location": "Location",
+    "locationMode": {
+      "gps": "Use GPS",
+      "manual": "Pick on map"
+    },
+    "locationManualHint": "Tap the map to drop a pin where you saw the person(s).",
+    "locationManualSet": "Pin placed manually",
+    "locationGpsFallbackHint": "GPS isn't working? Switch to \"Pick on map\".",
+    "locationNotChosen": "Place a pin or wait for GPS before submitting.",
+    "notes": "Notes",
+    "notesPlaceholder": "Optional notes about the location or situation",
+    "ageRange": "Estimated age range",
+    "gender": "Observed gender",
+    "race": "Observed race",
+    "ethnicity": "Observed ethnicity",
+    "unknown": "Unknown",
+    "outsideZoneWarn": "This appears to be outside your assigned zone. Submit anyway?",
+    "outsideZoneBlocked": "Strict zone enforcement is on for this event — this point is outside your zone, so the submission was refused.",
+    "saved": "Submission saved",
+    "savedOffline": "Saved offline — will sync when online",
+    "savedOutsideZone": "Saved (flagged outside zone)",
+    "submit": "Submit",
+    "submitting": "Submitting…"
+  },
+  "locationTypes": {
+    "street": "Street",
+    "encampment": "Encampment",
+    "vehicle": "Vehicle",
+    "doorway": "Doorway",
+    "park": "Park",
+    "underpass": "Underpass",
+    "abandoned": "Abandoned building",
+    "other": "Other"
+  },
+  "ageRanges": {
+    "under_18": "Under 18",
+    "18_24": "18–24",
+    "25_34": "25–34",
+    "35_44": "35–44",
+    "45_54": "45–54",
+    "55_64": "55–64",
+    "65_plus": "65+"
+  },
+  "genders": {
+    "male": "Male",
+    "female": "Female",
+    "non_binary": "Non-binary"
+  },
+  "races": {
+    "american_indian_alaska_native": "American Indian / Alaska Native",
+    "asian": "Asian",
+    "black_african_american": "Black / African American",
+    "native_hawaiian_pacific_islander": "Native Hawaiian / Pacific Islander",
+    "white": "White",
+    "multi_racial": "Multi-racial"
+  },
+  "ethnicities": {
+    "hispanic": "Hispanic / Latino",
+    "not_hispanic": "Not Hispanic / Latino"
+  }
+}

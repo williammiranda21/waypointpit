@@ -1,0 +1,142 @@
+{
+  "app": {
+    "name": "Waypoint PIT",
+    "tagline": "Aplicación de Conteo PIT"
+  },
+  "login": {
+    "welcome": "Bienvenido a Waypoint",
+    "subtitle": "Waypoint PIT — Aplicación de Conteo PIT",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "emailPlaceholder": "usted@ejemplo.org",
+    "passwordPlaceholder": "Ingrese su contraseña",
+    "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión…",
+    "forgotPassword": "¿Olvidó su contraseña?",
+    "footer": "Miami-Dade County Homeless Trust · FL-600"
+  },
+  "nav": {
+    "sectionAdmin": "Administración",
+    "sectionField": "Campo",
+    "dashboard": "Panel",
+    "events": "Eventos de Conteo",
+    "users": "Usuarios",
+    "myCount": "Mi Conteo",
+    "submissions": "Mis Envíos",
+    "exports": "Exportaciones",
+    "analysis": "Análisis",
+    "profile": "Perfil",
+    "logout": "Cerrar sesión"
+  },
+  "topbar": {
+    "search": "Buscar…",
+    "searchHint": "Ctrl+K"
+  },
+  "actions": {
+    "addObservation": "Agregar Observación",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "submit": "Enviar",
+    "continue": "Continuar"
+  },
+  "status": {
+    "online": "En línea",
+    "offline": "Sin conexión",
+    "syncing": "Sincronizando…",
+    "synced": "Sincronizado",
+    "draft": "Borrador",
+    "active": "Activo",
+    "closed": "Cerrado"
+  },
+  "pwa": {
+    "installTitle": "Agregue Waypoint PIT a su pantalla de inicio",
+    "installBody": "Instale Waypoint PIT para la mejor experiencia esta noche.",
+    "install": "Instalar",
+    "notNow": "Ahora no"
+  },
+  "volunteer": {
+    "noActiveSession": "Sin evento de conteo activo",
+    "noActiveSessionDescription": "Su administrador le asignará a un equipo cuando un evento de conteo esté activo.",
+    "team": "Equipo",
+    "zone": "Zona",
+    "geofenceOutside": "Ha salido de {{zone}}. Los envíos aquí se marcarán.",
+    "geofenceInside": "Está dentro de {{zone}}.",
+    "geofenceWaiting": "Esperando GPS…",
+    "menu": "Menú"
+  },
+  "submission": {
+    "chooseType": "¿Qué está registrando?",
+    "quickTallyTitle": "Conteo Rápido",
+    "quickTallyDescription": "Conteo para un grupo.",
+    "surveyTitle": "Encuesta Individual",
+    "surveyDescription": "Más detalle para una persona.",
+    "personCount": "Número de personas",
+    "locationType": "Ubicación",
+    "gps": {
+      "captured": "Ubicación capturada",
+      "waiting": "Esperando GPS…",
+      "denied": "Permiso de ubicación denegado — habilítelo en su navegador."
+    },
+    "location": "Ubicación",
+    "locationMode": {
+      "gps": "Usar GPS",
+      "manual": "Marcar en el mapa"
+    },
+    "locationManualHint": "Toque el mapa para colocar un marcador donde vio a la(s) persona(s).",
+    "locationManualSet": "Marcador colocado manualmente",
+    "locationGpsFallbackHint": "¿No funciona el GPS? Cambie a \"Marcar en el mapa\".",
+    "locationNotChosen": "Coloque un marcador o espere el GPS antes de enviar.",
+    "notes": "Notas",
+    "notesPlaceholder": "Notas opcionales sobre la ubicación o situación",
+    "ageRange": "Rango de edad estimado",
+    "gender": "Género observado",
+    "race": "Raza observada",
+    "ethnicity": "Etnicidad observada",
+    "unknown": "Desconocido",
+    "outsideZoneWarn": "Esto parece estar fuera de su zona asignada. ¿Enviar de todos modos?",
+    "outsideZoneBlocked": "Este evento tiene aplicación estricta de zonas activada — este punto está fuera de su zona, por lo que el envío fue rechazado.",
+    "saved": "Envío guardado",
+    "savedOffline": "Guardado sin conexión — sincronizará cuando vuelva la conexión",
+    "savedOutsideZone": "Guardado (marcado fuera de zona)",
+    "submit": "Enviar",
+    "submitting": "Enviando…"
+  },
+  "locationTypes": {
+    "street": "Calle",
+    "encampment": "Campamento",
+    "vehicle": "Vehículo",
+    "doorway": "Entrada",
+    "park": "Parque",
+    "underpass": "Bajo paso",
+    "abandoned": "Edificio abandonado",
+    "other": "Otro"
+  },
+  "ageRanges": {
+    "under_18": "Menos de 18",
+    "18_24": "18–24",
+    "25_34": "25–34",
+    "35_44": "35–44",
+    "45_54": "45–54",
+    "55_64": "55–64",
+    "65_plus": "65+"
+  },
+  "genders": {
+    "male": "Masculino",
+    "female": "Femenino",
+    "non_binary": "No binario"
+  },
+  "races": {
+    "american_indian_alaska_native": "Indígena Americano / Nativo de Alaska",
+    "asian": "Asiático",
+    "black_african_american": "Negro / Afroamericano",
+    "native_hawaiian_pacific_islander": "Nativo Hawaiano / Islas del Pacífico",
+    "white": "Blanco",
+    "multi_racial": "Multirracial"
+  },
+  "ethnicities": {
+    "hispanic": "Hispano / Latino",
+    "not_hispanic": "No Hispano / Latino"
+  }
+}
