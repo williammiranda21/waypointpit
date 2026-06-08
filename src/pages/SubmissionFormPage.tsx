@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
+  AlertTriangle,
   ArrowLeft,
   Building2,
   Car,
@@ -116,7 +117,8 @@ function SubmissionForm({ session, onDone }: SubmissionFormProps) {
   const [race, setRace] = useState<Race | ''>('');
   const [ethnicity, setEthnicity] = useState<Ethnicity | ''>('');
   const [error, setError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState(false);
+  // Outside-zone popup: 'warn' = flag mode (can submit anyway), 'blocked' = refuse mode.
+  const [outsideDialog, setOutsideDialog] = useState<'warn' | 'blocked' | null>(null);
   // Location source: 'gps' (geolocation API) or 'manual' (tap-to-drop pin).
   const [locationMode, setLocationMode] = useState<'gps' | 'manual'>('gps');
   const [manualPosition, setManualPosition] = useState<{ lat: number; lng: number } | null>(null);
@@ -169,15 +171,15 @@ function SubmissionForm({ session, onDone }: SubmissionFormProps) {
     }
 
     // Outside zone behavior:
-    //   - Strict mode: refuse outright (the server would also reject)
-    //   - Soft mode: warn once via confirm dialog, then save with outside_zone=true
+    //   - Refuse mode (enforce_zone_boundary): block with a popup; server also rejects.
+    //   - Flag mode: warn once via popup, then save with outside_zone=true.
     if (insideZone === false) {
       if (event.enforce_zone_boundary) {
-        setError(t('submission.outsideZoneBlocked'));
+        setOutsideDialog('blocked');
         return;
       }
       if (!skipConfirm) {
-        setConfirming(true);
+        setOutsideDialog('warn');
         return;
       }
     }
@@ -448,26 +450,41 @@ function SubmissionForm({ session, onDone }: SubmissionFormProps) {
         </form>
       )}
 
-      {confirming && (
+      {outsideDialog && (
         <div
           className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
           role="dialog"
           aria-modal="true"
         >
           <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-5">
-            <h3 className="text-base font-semibold text-text-primary">{t('submission.outsideZoneWarn')}</h3>
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <Button variant="secondary" onClick={() => setConfirming(false)}>
-                {t('actions.cancel')}
-              </Button>
-              <Button
-                onClick={() => {
-                  setConfirming(false);
-                  void handleSubmit(undefined, true);
-                }}
-              >
-                {t('submission.submit')}
-              </Button>
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 shrink-0 rounded-full bg-red-50 text-status-alert inline-flex items-center justify-center">
+                <AlertTriangle size={20} />
+              </div>
+              <p className="pt-1.5 text-sm text-text-body">
+                {outsideDialog === 'blocked'
+                  ? t('submission.outsideZoneBlocked')
+                  : t('submission.outsideZoneWarn')}
+              </p>
+            </div>
+            <div className="mt-5 flex items-center justify-end gap-2">
+              {outsideDialog === 'warn' ? (
+                <>
+                  <Button variant="secondary" onClick={() => setOutsideDialog(null)}>
+                    {t('actions.cancel')}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setOutsideDialog(null);
+                      void handleSubmit(undefined, true);
+                    }}
+                  >
+                    {t('submission.submitAnyway')}
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => setOutsideDialog(null)}>{t('actions.gotIt')}</Button>
+              )}
             </div>
           </div>
         </div>

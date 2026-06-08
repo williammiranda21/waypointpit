@@ -39,7 +39,8 @@
     "next": "Next",
     "back": "Back",
     "submit": "Submit",
-    "continue": "Continue"
+    "continue": "Continue",
+    "gotIt": "Got it"
   },
   "status": {
     "online": "Online",
@@ -95,8 +96,9 @@
     "race": "Observed race",
     "ethnicity": "Observed ethnicity",
     "unknown": "Unknown",
-    "outsideZoneWarn": "This appears to be outside your assigned zone. Submit anyway?",
-    "outsideZoneBlocked": "Strict zone enforcement is on for this event — this point is outside your zone, so the submission was refused.",
+    "outsideZoneWarn": "You are outside your assigned zone, submissions captured here will be flagged.",
+    "outsideZoneBlocked": "You are outside your assigned zone. This event does not allow submissions outside your zone.",
+    "submitAnyway": "Submit anyway",
     "saved": "Submission saved",
     "savedOffline": "Saved offline — will sync when online",
     "savedOutsideZone": "Saved (flagged outside zone)",

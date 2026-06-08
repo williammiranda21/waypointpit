@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
-import { Toggle } from '@/components/ui/Toggle';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useCreateEvent, useEventsList } from '@/hooks/useEvents';
 import { cloneEventSetup } from '@/lib/db/clone';
@@ -255,12 +254,45 @@ export function EventCreatePage() {
             </CardDescription>
           </CardHeader>
           <CardBody className="space-y-4">
-            <Toggle
-              checked={enforce}
-              onChange={(e) => setEnforce(e.target.checked)}
-              label="Strictly enforce zone boundaries"
-              description="When on, submissions outside the buffered zone are rejected by the server. When off, they're allowed but flagged for coordinator audit."
-            />
+            <div>
+              <span className="block text-sm font-medium text-text-body mb-2">
+                When a submission is captured outside the assigned zone
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {(
+                  [
+                    {
+                      value: false,
+                      title: 'Flag the submission',
+                      description: 'Volunteers can still submit; the submission is saved and flagged for coordinator review.',
+                    },
+                    {
+                      value: true,
+                      title: 'Refuse the submission',
+                      description: 'The submission is blocked — volunteers must be inside the zone (plus buffer) to submit.',
+                    },
+                  ] as Array<{ value: boolean; title: string; description: string }>
+                ).map((opt) => {
+                  const active = opt.value === enforce;
+                  return (
+                    <button
+                      key={String(opt.value)}
+                      type="button"
+                      onClick={() => setEnforce(opt.value)}
+                      className={cn(
+                        'text-left p-3 rounded-xl border-2 transition-all',
+                        active
+                          ? 'border-primary bg-primary-light/40'
+                          : 'border-wp-border bg-white hover:border-gray-300',
+                      )}
+                    >
+                      <p className="text-sm font-semibold text-text-primary">{opt.title}</p>
+                      <p className="mt-0.5 text-xs text-text-muted">{opt.description}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <div>
               <label htmlFor="buffer" className="block text-sm font-medium text-text-body mb-1.5">

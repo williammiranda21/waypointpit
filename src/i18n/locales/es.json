@@ -39,7 +39,8 @@
     "next": "Siguiente",
     "back": "Atrás",
     "submit": "Enviar",
-    "continue": "Continuar"
+    "continue": "Continuar",
+    "gotIt": "Entendido"
   },
   "status": {
     "online": "En línea",
@@ -95,8 +96,9 @@
     "race": "Raza observada",
     "ethnicity": "Etnicidad observada",
     "unknown": "Desconocido",
-    "outsideZoneWarn": "Esto parece estar fuera de su zona asignada. ¿Enviar de todos modos?",
-    "outsideZoneBlocked": "Este evento tiene aplicación estricta de zonas activada — este punto está fuera de su zona, por lo que el envío fue rechazado.",
+    "outsideZoneWarn": "Está fuera de su zona asignada; los envíos capturados aquí se marcarán.",
+    "outsideZoneBlocked": "Está fuera de su zona asignada. Este evento no permite envíos fuera de su zona.",
+    "submitAnyway": "Enviar de todos modos",
     "saved": "Envío guardado",
     "savedOffline": "Guardado sin conexión — sincronizará cuando vuelva la conexión",
     "savedOutsideZone": "Guardado (marcado fuera de zona)",
