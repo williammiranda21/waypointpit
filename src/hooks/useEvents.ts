@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createEvent,
+  deleteEvent,
   getEvent,
   listEvents,
   updateEvent,
@@ -52,6 +53,18 @@ export function useUpdateEvent(id: string) {
     onSuccess: (updated) => {
       if (orgId) qc.invalidateQueries({ queryKey: eventsKey.list(orgId) });
       qc.setQueryData(eventsKey.detail(id), updated);
+    },
+  });
+}
+
+export function useDeleteEvent() {
+  const qc = useQueryClient();
+  const orgId = useAuthStore((s) => s.user?.orgId);
+  return useMutation({
+    mutationFn: (id: string) => deleteEvent(id),
+    onSuccess: (_data, id) => {
+      if (orgId) qc.invalidateQueries({ queryKey: eventsKey.list(orgId) });
+      qc.removeQueries({ queryKey: eventsKey.detail(id) });
     },
   });
 }

@@ -97,6 +97,22 @@ export async function updateEvent(id: string, patch: UpdateEventInput): Promise<
   return data;
 }
 
+/**
+ * Permanently delete an event and everything under it. Zones, teams, and
+ * hotspots are removed by ON DELETE CASCADE; submissions are ON DELETE RESTRICT,
+ * so we delete those first (admin RLS permits it) before removing the event.
+ */
+export async function deleteEvent(id: string): Promise<void> {
+  if (!supabaseConfigured) {
+    demoDelete(id);
+    return;
+  }
+  const { error: subErr } = await supabase.from('submissions').delete().eq('count_event_id', id);
+  if (subErr) throw subErr;
+  const { error } = await supabase.from('count_events').delete().eq('id', id);
+  if (error) throw error;
+}
+
 // -----------------------------------------------------------------------------
 // Demo-mode storage (localStorage, scoped per org_id)
 // -----------------------------------------------------------------------------
@@ -168,4 +184,8 @@ function demoUpdate(id: string, patch: UpdateEventInput): CountEvent {
   all[idx] = next;
   demoWriteAll(all);
   return next;
+}
+
+function demoDelete(id: string): void {
+  demoWriteAll(demoReadAll().filter((e) => e.id !== id));
 }

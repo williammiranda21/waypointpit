@@ -1,10 +1,12 @@
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, MapPin, Users, ShieldCheck, ShieldOff, Calendar, Pencil, Copy, AlertTriangle, ClipboardList, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, MapPin, Users, ShieldCheck, ShieldOff, Calendar, Pencil, Copy, AlertTriangle, ClipboardList, ChevronRight, Trash2, Loader2 } from 'lucide-react';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { useEvent, useUpdateEvent } from '@/hooks/useEvents';
+import { toast } from '@/stores/toastStore';
+import { useEvent, useUpdateEvent, useDeleteEvent } from '@/hooks/useEvents';
 import { useZonesForEvent } from '@/hooks/useZones';
 import { useTeamsForEvent } from '@/hooks/useTeams';
 import { useHotspotsForEvent } from '@/hooks/useHotspots';
@@ -30,9 +32,12 @@ const submissionModeLabel: Record<SubmissionMode, string> = {
 
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: event, isLoading, error } = useEvent(id);
   const { data: clonedFrom } = useEvent(event?.cloned_from_event_id ?? undefined);
   const updateMutation = useUpdateEvent(id ?? '');
+  const deleteMutation = useDeleteEvent();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const { data: zones = [] } = useZonesForEvent(id);
   const { data: teams = [] } = useTeamsForEvent(id);
   const { data: hotspots = [] } = useHotspotsForEvent(id);
@@ -63,6 +68,20 @@ export function EventDetailPage() {
 
   const launch = () => updateMutation.mutate({ status: 'active' });
   const close = () => updateMutation.mutate({ status: 'closed' });
+
+  const handleDelete = async () => {
+    try {
+      await deleteMutation.mutateAsync(event.id);
+      toast({ tone: 'success', message: `Deleted "${event.name}".` });
+      navigate('/events', { replace: true });
+    } catch (err) {
+      toast({
+        tone: 'error',
+        message: err instanceof Error ? err.message : 'Could not delete the event.',
+      });
+      setConfirmDelete(false);
+    }
+  };
 
   return (
     <div className="max-w-5xl">
@@ -122,6 +141,15 @@ export function EventDetailPage() {
                 Close event
               </Button>
             )}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setConfirmDelete(true)}
+              className="text-status-alert hover:bg-red-50"
+            >
+              <Trash2 size={14} />
+              Delete
+            </Button>
           </>
         }
       />
@@ -174,6 +202,46 @@ export function EventDetailPage() {
           description="Known locations and police intel to check."
         />
       </div>
+
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-5">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 shrink-0 rounded-full bg-red-50 text-status-alert inline-flex items-center justify-center">
+                <Trash2 size={18} />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-semibold text-text-primary">
+                  Delete &ldquo;{event.name}&rdquo;?
+                </h3>
+                <p className="mt-1 text-sm text-text-body">
+                  This permanently removes the event and all of its zones, teams, hotspots, and
+                  submissions ({zones.length} zone{zones.length === 1 ? '' : 's'}, {teams.length}{' '}
+                  team{teams.length === 1 ? '' : 's'}, {hotspots.length} hotspot
+                  {hotspots.length === 1 ? '' : 's'}). This cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleteMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={handleDelete} disabled={deleteMutation.isPending}>
+                {deleteMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                Delete event
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
