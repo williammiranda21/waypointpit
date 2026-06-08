@@ -7,7 +7,12 @@ import {
   type CreateZoneInput,
   type UpdateZoneInput,
 } from '@/lib/db/zones';
-import { listZoneTemplates } from '@/lib/db/zoneTemplates';
+import {
+  listZoneTemplates,
+  createZoneTemplates,
+  deleteZoneTemplate,
+  type NewZoneTemplate,
+} from '@/lib/db/zoneTemplates';
 
 export const zonesKey = {
   all: ['zones'] as const,
@@ -28,6 +33,22 @@ export function useZoneTemplates() {
     queryKey: zonesKey.templates,
     queryFn: listZoneTemplates,
     staleTime: 5 * 60_000,
+  });
+}
+
+export function useCreateZoneTemplates() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (items: NewZoneTemplate[]) => createZoneTemplates(items),
+    onSuccess: () => qc.invalidateQueries({ queryKey: zonesKey.templates }),
+  });
+}
+
+export function useDeleteZoneTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteZoneTemplate(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: zonesKey.templates }),
   });
 }
 

@@ -4,7 +4,6 @@ import { Card, CardBody } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { MapView } from '@/components/map/MapView';
-import { useCreateZone } from '@/hooks/useZones';
 import { parseZoneFile, type ImportedZone } from '@/lib/zones/importGeometry';
 
 interface Candidate extends ImportedZone {
@@ -12,15 +11,19 @@ interface Candidate extends ImportedZone {
   color: string;
 }
 
+export type ImportedItem = ImportedZone & { color: string };
+
 interface ImportZonesPanelProps {
-  eventId: string;
   colors: string[];
-  /** Called after a successful import so the parent can navigate to the list. */
+  /** Persist the selected zones (as event zones, templates, etc.). */
+  onImport: (items: ImportedItem[]) => Promise<void>;
+  /** Called after a successful import (e.g. navigate or refresh). */
   onImported: () => void;
+  /** Custom call-to-action label, e.g. "Add 3 templates". */
+  ctaLabel?: (count: number) => string;
 }
 
-export function ImportZonesPanel({ eventId, colors, onImported }: ImportZonesPanelProps) {
-  const createMutation = useCreateZone(eventId);
+export function ImportZonesPanel({ colors, onImport, onImported, ctaLabel }: ImportZonesPanelProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [fileName, setFileName] = useState<string | null>(null);
@@ -28,7 +31,6 @@ export function ImportZonesPanel({ eventId, colors, onImported }: ImportZonesPan
   const [parsing, setParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
   const handleFile = async (file: File) => {
     setError(null);
@@ -53,24 +55,17 @@ export function ImportZonesPanel({ eventId, colors, onImported }: ImportZonesPan
   const handleImport = async () => {
     setError(null);
     setImporting(true);
-    setProgress({ done: 0, total: selected.length });
     try {
-      let done = 0;
-      for (const c of selected) {
-        await createMutation.mutateAsync({
+      await onImport(
+        selected.map((c) => ({
           name: c.name.trim() || 'Imported zone',
           geometry: c.geometry,
           color: c.color,
-        });
-        done += 1;
-        setProgress({ done, total: selected.length });
-      }
+        })),
+      );
       onImported();
     } catch (e) {
-      setError(
-        `Imported ${progress?.done ?? 0} of ${selected.length} before an error: ` +
-          (e instanceof Error ? e.message : 'unknown error'),
-      );
+      setError(e instanceof Error ? e.message : 'Import failed.');
     } finally {
       setImporting(false);
     }
@@ -207,18 +202,17 @@ export function ImportZonesPanel({ eventId, colors, onImported }: ImportZonesPan
             </div>
 
             <div className="flex items-center justify-end gap-3">
-              {progress && importing && (
-                <span className="text-xs text-text-muted">
-                  Importing {progress.done}/{progress.total}…
-                </span>
-              )}
               <Button type="button" onClick={handleImport} disabled={importing || selected.length === 0}>
                 {importing ? (
                   <Loader2 size={14} className="animate-spin" />
                 ) : (
                   <CheckCircle2 size={14} />
                 )}
-                {importing ? 'Importing…' : `Import ${selected.length} zone${selected.length === 1 ? '' : 's'}`}
+                {importing
+                  ? 'Importing…'
+                  : ctaLabel
+                    ? ctaLabel(selected.length)
+                    : `Import ${selected.length} zone${selected.length === 1 ? '' : 's'}`}
               </Button>
             </div>
           </>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Pencil, LayoutTemplate, MapPin, Upload } from 'lucide-react';
+import { ArrowLeft, Pencil, LayoutTemplate, MapPin, Upload, X, Trash2, FileUp } from 'lucide-react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
@@ -14,7 +14,14 @@ import { ImportZonesPanel } from '@/components/zones/ImportZonesPanel';
 import { ZoneThumbnail } from '@/components/map/ZoneThumbnail';
 import { mapboxConfigured } from '@/components/map/mapToken';
 import { useEvent } from '@/hooks/useEvents';
-import { useCreateZone, useZoneTemplates } from '@/hooks/useZones';
+import {
+  useCreateZone,
+  useZoneTemplates,
+  useCreateZoneTemplates,
+  useDeleteZoneTemplate,
+} from '@/hooks/useZones';
+import { useAuthStore } from '@/stores/authStore';
+import { toast } from '@/stores/toastStore';
 import type { GeoJSONPolygon } from '@/lib/database.types';
 import { cn } from '@/lib/cn';
 
@@ -37,6 +44,10 @@ export function ZoneEditorPage() {
   const { data: event } = useEvent(eventId);
   const { data: templates = [] } = useZoneTemplates();
   const createMutation = useCreateZone(eventId ?? '');
+  const createTemplates = useCreateZoneTemplates();
+  const deleteTemplate = useDeleteZoneTemplate();
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.role === 'coc_admin' || user?.role === 'super_admin';
 
   const [mode, setMode] = useState<Mode>(mapboxConfigured ? 'draw' : 'template');
   const [name, setName] = useState('');
@@ -44,6 +55,7 @@ export function ZoneEditorPage() {
   const [drawn, setDrawn] = useState<GeoJSONPolygon | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showTemplateImport, setShowTemplateImport] = useState(false);
 
   const drawRef = useRef<MapboxDraw | null>(null);
 
@@ -112,6 +124,20 @@ export function ZoneEditorPage() {
     }
   }, [selectedTemplate]);
 
+  const handleDeleteTemplate = async (templateId: string, templateName: string) => {
+    if (!window.confirm(`Remove the "${templateName}" template from your library?`)) return;
+    try {
+      await deleteTemplate.mutateAsync(templateId);
+      if (selectedTemplateId === templateId) setSelectedTemplateId(null);
+      toast({ tone: 'success', message: `Removed "${templateName}".` });
+    } catch (err) {
+      toast({
+        tone: 'error',
+        message: err instanceof Error ? err.message : 'Could not delete the template.',
+      });
+    }
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -173,8 +199,16 @@ export function ZoneEditorPage() {
 
       {mode === 'import' && (
         <ImportZonesPanel
-          eventId={eventId}
           colors={DEFAULT_COLORS}
+          onImport={async (items) => {
+            for (const it of items) {
+              await createMutation.mutateAsync({
+                name: it.name,
+                geometry: it.geometry,
+                color: it.color,
+              });
+            }
+          }}
           onImported={() => navigate(`/events/${eventId}/zones`)}
         />
       )}
@@ -220,33 +254,67 @@ export function ZoneEditorPage() {
         {mode === 'template' && (
           <Card>
             <CardBody>
-              <p className="text-sm text-text-muted mb-4">
-                Predefined polygons for Miami-Dade. Click one to use it — you can rename it
-                below before saving.
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {templates.map((t) => {
-                  const active = t.id === selectedTemplateId;
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setSelectedTemplateId(t.id)}
-                      className={cn(
-                        'group text-left rounded-xl border p-3 transition-all',
-                        active
-                          ? 'border-primary ring-2 ring-primary/30 bg-primary-light/40'
-                          : 'border-wp-border bg-white hover:border-gray-300',
-                      )}
-                    >
-                      <ZoneThumbnail geometry={t.geometry} color={t.default_color} size={88} />
-                      <p className="mt-2 text-xs font-medium text-text-primary truncate">
-                        {t.name}
-                      </p>
-                    </button>
-                  );
-                })}
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <p className="text-sm text-text-muted">
+                  Pick a zone from your library — click one, then rename below before saving.
+                  {isAdmin && ' Import a shapefile or GeoJSON to build your own reusable set.'}
+                </p>
+                {isAdmin && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => setShowTemplateImport(true)}
+                  >
+                    <FileUp size={14} />
+                    Import from file
+                  </Button>
+                )}
               </div>
+
+              {templates.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-wp-border bg-gray-50 px-4 py-8 text-center text-sm text-text-muted">
+                  No saved zones yet.{isAdmin ? ' Use “Import from file” to add yours.' : ''}
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {templates.map((t) => {
+                    const active = t.id === selectedTemplateId;
+                    const canDelete = isAdmin && !!t.org_id && t.org_id === user?.orgId;
+                    return (
+                      <div key={t.id} className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTemplateId(t.id)}
+                          className={cn(
+                            'group w-full text-left rounded-xl border p-3 transition-all',
+                            active
+                              ? 'border-primary ring-2 ring-primary/30 bg-primary-light/40'
+                              : 'border-wp-border bg-white hover:border-gray-300',
+                          )}
+                        >
+                          <ZoneThumbnail geometry={t.geometry} color={t.default_color} size={88} />
+                          <p className="mt-2 text-xs font-medium text-text-primary truncate">
+                            {t.name}
+                          </p>
+                        </button>
+                        {canDelete && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTemplate(t.id, t.name)}
+                            className="absolute top-1.5 right-1.5 rounded-md bg-white/90 p-1 text-text-muted shadow-sm hover:text-status-alert"
+                            aria-label={`Delete ${t.name}`}
+                            title="Delete template"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardBody>
           </Card>
         )}
@@ -314,6 +382,44 @@ export function ZoneEditorPage() {
           </Button>
         </div>
       </form>
+      )}
+
+      {showTemplateImport && (
+        <div
+          className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="my-8 w-full max-w-2xl rounded-2xl bg-white shadow-lg">
+            <div className="flex items-center justify-between border-b border-wp-border px-5 h-14">
+              <h3 className="text-sm font-semibold text-text-primary">
+                Import zones into your library
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowTemplateImport(false)}
+                className="rounded p-1 text-text-muted hover:bg-gray-100"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4">
+              <p className="mb-3 text-xs text-text-muted">
+                These become reusable predefined zones for every event in your CoC.
+              </p>
+              <ImportZonesPanel
+                colors={DEFAULT_COLORS}
+                ctaLabel={(n) => `Add ${n} template${n === 1 ? '' : 's'}`}
+                onImport={(items) => createTemplates.mutateAsync(items)}
+                onImported={() => {
+                  setShowTemplateImport(false);
+                  toast({ tone: 'success', message: 'Zones added to your library.' });
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
