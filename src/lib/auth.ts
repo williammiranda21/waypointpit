@@ -48,12 +48,22 @@ export async function signInWithEmail({ email, password }: SignInArgs): Promise<
   return user;
 }
 
-/** Sign out everywhere and clear local auth state. */
+/**
+ * Sign out and clear local auth state.
+ *
+ * Clears the local store FIRST so the UI logs out instantly even if the network
+ * revoke stalls (Supabase's auth lock has been seen to hang). The server-side
+ * token revoke is then best-effort — a failure there doesn't keep the user
+ * stuck signed in locally.
+ */
 export async function signOut(): Promise<void> {
-  if (supabaseConfigured) {
-    await supabase.auth.signOut();
-  }
   useAuthStore.getState().clear();
+  if (!supabaseConfigured) return;
+  try {
+    await supabase.auth.signOut();
+  } catch (e) {
+    console.warn('[waypoint-pit] server sign-out failed (local session already cleared):', e);
+  }
 }
 
 /**

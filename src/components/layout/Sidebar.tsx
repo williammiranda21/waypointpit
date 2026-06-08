@@ -65,8 +65,8 @@ export function Sidebar() {
     .join('')
     .toUpperCase();
 
-  const handleLogout = async () => {
-    await signOut();
+  const handleLogout = () => {
+    void signOut();
     navigate('/login', { replace: true });
   };
 

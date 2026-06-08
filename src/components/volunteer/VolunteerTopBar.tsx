@@ -34,8 +34,10 @@ export function VolunteerTopBar({ teamName, zoneName }: VolunteerTopBarProps) {
     void i18n.changeLanguage(next);
   };
 
-  const handleLogout = async () => {
-    await signOut();
+  const handleLogout = () => {
+    // signOut() clears local state synchronously before its network call, so we
+    // navigate right away — no waiting on (or hanging behind) the server revoke.
+    void signOut();
     navigate('/login', { replace: true });
   };
 
