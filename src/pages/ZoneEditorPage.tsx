@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Pencil, LayoutTemplate, MapPin, Upload, X, Trash2, FileUp } from 'lucide-react';
+import { ArrowLeft, Pencil, LayoutTemplate, MapPin, Upload, X, Trash2, FileUp, Check } from 'lucide-react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
@@ -53,7 +53,7 @@ export function ZoneEditorPage() {
   const [name, setName] = useState('');
   const [color, setColor] = useState(DEFAULT_COLORS[0]);
   const [drawn, setDrawn] = useState<GeoJSONPolygon | null>(null);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState<string | null>(null);
   const [showTemplateImport, setShowTemplateImport] = useState(false);
 
@@ -113,22 +113,23 @@ export function ZoneEditorPage() {
     }
   }, [mode]);
 
-  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId) ?? null;
-
-  // When a template is selected, default the name + color from it (only if the
-  // user hasn't typed something custom).
-  useEffect(() => {
-    if (selectedTemplate) {
-      setName((prev) => (prev ? prev : selectedTemplate.name));
-      setColor(selectedTemplate.default_color);
-    }
-  }, [selectedTemplate]);
+  const toggleTemplate = (id: string) =>
+    setSelectedTemplateIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const handleDeleteTemplate = async (templateId: string, templateName: string) => {
     if (!window.confirm(`Remove the "${templateName}" template from your library?`)) return;
     try {
       await deleteTemplate.mutateAsync(templateId);
-      if (selectedTemplateId === templateId) setSelectedTemplateId(null);
+      setSelectedTemplateIds((prev) => {
+        const next = new Set(prev);
+        next.delete(templateId);
+        return next;
+      });
       toast({ tone: 'success', message: `Removed "${templateName}".` });
     } catch (err) {
       toast({
@@ -141,30 +142,42 @@ export function ZoneEditorPage() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-
     if (!eventId) return;
+
+    // Template mode: add one zone per selected template (multi-select).
+    if (mode === 'template') {
+      const chosen = templates.filter((t) => selectedTemplateIds.has(t.id));
+      if (chosen.length === 0) {
+        setError('Select at least one zone to add.');
+        return;
+      }
+      try {
+        for (const t of chosen) {
+          await createMutation.mutateAsync({
+            name: t.name,
+            geometry: t.geometry,
+            color: t.default_color,
+            template_id: t.id,
+          });
+        }
+        navigate(`/events/${eventId}/zones`);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not add the selected zones.');
+      }
+      return;
+    }
+
+    // Draw mode: single zone from the drawn polygon + name/color.
     if (!name.trim()) {
       setError('Name is required.');
       return;
     }
-
-    const geometry = mode === 'draw' ? drawn : selectedTemplate?.geometry ?? null;
-    if (!geometry) {
-      setError(
-        mode === 'draw'
-          ? 'Draw a polygon on the map first.'
-          : 'Pick a template from the grid.',
-      );
+    if (!drawn) {
+      setError('Draw a polygon on the map first.');
       return;
     }
-
     try {
-      await createMutation.mutateAsync({
-        name: name.trim(),
-        geometry,
-        color,
-        template_id: mode === 'template' ? selectedTemplate?.id ?? null : null,
-      });
+      await createMutation.mutateAsync({ name: name.trim(), geometry: drawn, color, template_id: null });
       navigate(`/events/${eventId}/zones`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create zone.');
@@ -254,9 +267,9 @@ export function ZoneEditorPage() {
         {mode === 'template' && (
           <Card>
             <CardBody>
-              <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="mb-3 flex items-start justify-between gap-3">
                 <p className="text-sm text-text-muted">
-                  Pick a zone from your library — click one, then rename below before saving.
+                  Select one or more zones to add — tap to toggle, or use Select all.
                   {isAdmin && ' Import a shapefile or GeoJSON to build your own reusable set.'}
                 </p>
                 {isAdmin && (
@@ -278,47 +291,80 @@ export function ZoneEditorPage() {
                   No saved zones yet.{isAdmin ? ' Use “Import from file” to add yours.' : ''}
                 </p>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {templates.map((t) => {
-                    const active = t.id === selectedTemplateId;
-                    const canDelete = isAdmin && !!t.org_id && t.org_id === user?.orgId;
-                    return (
-                      <div key={t.id} className="relative">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedTemplateId(t.id)}
-                          className={cn(
-                            'group w-full text-left rounded-xl border p-3 transition-all',
-                            active
-                              ? 'border-primary ring-2 ring-primary/30 bg-primary-light/40'
-                              : 'border-wp-border bg-white hover:border-gray-300',
-                          )}
-                        >
-                          <ZoneThumbnail geometry={t.geometry} color={t.default_color} size={88} />
-                          <p className="mt-2 text-xs font-medium text-text-primary truncate">
-                            {t.name}
-                          </p>
-                        </button>
-                        {canDelete && (
+                <>
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-xs font-medium text-text-primary">
+                      {selectedTemplateIds.size} of {templates.length} selected
+                    </span>
+                    <div className="flex gap-3 text-xs">
+                      <button
+                        type="button"
+                        className="text-primary hover:underline"
+                        onClick={() => setSelectedTemplateIds(new Set(templates.map((t) => t.id)))}
+                      >
+                        Select all
+                      </button>
+                      <button
+                        type="button"
+                        className="text-text-muted hover:underline"
+                        onClick={() => setSelectedTemplateIds(new Set())}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {templates.map((t) => {
+                      const active = selectedTemplateIds.has(t.id);
+                      const canDelete = isAdmin && !!t.org_id && t.org_id === user?.orgId;
+                      return (
+                        <div key={t.id} className="relative">
                           <button
                             type="button"
-                            onClick={() => handleDeleteTemplate(t.id, t.name)}
-                            className="absolute top-1.5 right-1.5 rounded-md bg-white/90 p-1 text-text-muted shadow-sm hover:text-status-alert"
-                            aria-label={`Delete ${t.name}`}
-                            title="Delete template"
+                            onClick={() => toggleTemplate(t.id)}
+                            className={cn(
+                              'group w-full text-left rounded-xl border p-3 transition-all',
+                              active
+                                ? 'border-primary ring-2 ring-primary/30 bg-primary-light/40'
+                                : 'border-wp-border bg-white hover:border-gray-300',
+                            )}
                           >
-                            <Trash2 size={13} />
+                            <span
+                              className={cn(
+                                'absolute top-1.5 left-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-md border',
+                                active ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white',
+                              )}
+                              aria-hidden
+                            >
+                              {active && <Check size={13} />}
+                            </span>
+                            <ZoneThumbnail geometry={t.geometry} color={t.default_color} size={88} />
+                            <p className="mt-2 text-xs font-medium text-text-primary truncate">
+                              {t.name}
+                            </p>
                           </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                          {canDelete && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTemplate(t.id, t.name)}
+                              className="absolute top-1.5 right-1.5 rounded-md bg-white/90 p-1 text-text-muted shadow-sm hover:text-status-alert"
+                              aria-label={`Delete ${t.name}`}
+                              title="Delete template"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </CardBody>
           </Card>
         )}
 
+        {mode === 'draw' && (
         <Card>
           <CardBody className="space-y-4">
             <div>
@@ -356,6 +402,7 @@ export function ZoneEditorPage() {
             </div>
           </CardBody>
         </Card>
+        )}
 
         {error && (
           <div
@@ -372,11 +419,18 @@ export function ZoneEditorPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={createMutation.isPending}>
-            {createMutation.isPending ? 'Saving…' : (
+          <Button
+            type="submit"
+            disabled={createMutation.isPending || (mode === 'template' && selectedTemplateIds.size === 0)}
+          >
+            {createMutation.isPending ? (
+              'Saving…'
+            ) : (
               <>
                 <MapPin size={14} />
-                Save zone
+                {mode === 'template'
+                  ? `Add ${selectedTemplateIds.size} zone${selectedTemplateIds.size === 1 ? '' : 's'}`
+                  : 'Save zone'}
               </>
             )}
           </Button>
