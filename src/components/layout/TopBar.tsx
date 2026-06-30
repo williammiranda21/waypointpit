@@ -44,7 +44,13 @@ export function TopBar({ hasNotifications = false, onMenuClick }: TopBarProps) {
           : t('status.online');
 
   return (
-    <header className="sticky top-0 z-20 h-14 bg-white border-b border-gray-100 flex items-center px-4 gap-3">
+    <header
+      className="sticky top-0 z-20 bg-white border-b border-gray-100 flex items-center px-4 gap-3"
+      style={{
+        height: 'calc(3.5rem + env(safe-area-inset-top))',
+        paddingTop: 'env(safe-area-inset-top)',
+      }}
+    >
       <button
         type="button"
         onClick={onMenuClick}

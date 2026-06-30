@@ -100,9 +100,13 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
       >
       <div
         className={cn(
-          'flex h-14 items-center px-4',
+          'flex items-center px-4',
           collapsed ? 'justify-center' : 'gap-2',
         )}
+        style={{
+          height: 'calc(3.5rem + env(safe-area-inset-top))',
+          paddingTop: 'env(safe-area-inset-top)',
+        }}
       >
         <Logo size={20} />
         {!collapsed && (

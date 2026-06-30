@@ -42,7 +42,13 @@ export function VolunteerTopBar({ teamName, zoneName }: VolunteerTopBarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 h-14 bg-white border-b border-wp-border flex items-center px-3 gap-2">
+    <header
+      className="sticky top-0 z-30 bg-white border-b border-wp-border flex items-center px-3 gap-2"
+      style={{
+        height: 'calc(3.5rem + env(safe-area-inset-top))',
+        paddingTop: 'env(safe-area-inset-top)',
+      }}
+    >
       <Logo size={22} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 text-sm font-semibold text-text-primary truncate">
