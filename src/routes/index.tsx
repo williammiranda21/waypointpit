@@ -1,6 +1,7 @@
 import { createBrowserRouter, Outlet } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { LoginPage } from '@/pages/LoginPage';
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { EventsListPage } from '@/pages/EventsListPage';
 import { EventCreatePage } from '@/pages/EventCreatePage';
@@ -53,6 +54,7 @@ function VolunteerGuard() {
 export const router = createBrowserRouter([
   { path: '/', element: <RedirectHome /> },
   { path: '/login', element: <LoginPage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
   {
     element: <AdminShell />,
     children: [

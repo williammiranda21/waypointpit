@@ -31,7 +31,10 @@ export function RequireAuth({ children, allow }: RequireAuthProps) {
 export function RedirectHome() {
   const user = useAuthStore((s) => s.user);
   const status = useAuthStore((s) => s.status);
+  const passwordRecovery = useAuthStore((s) => s.passwordRecovery);
 
+  // Arrived via a reset link (Supabase Site URL points here) — go set a password.
+  if (passwordRecovery) return <Navigate to="/reset-password" replace />;
   if (status === 'loading') return <AuthSplash />;
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'volunteer' || user.role === 'team_lead') {

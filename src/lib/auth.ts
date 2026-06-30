@@ -67,6 +67,27 @@ export async function signOut(): Promise<void> {
 }
 
 /**
+ * Send a password-reset email. The link returns the user to /reset-password
+ * (that URL must be in Supabase's Redirect URLs allowlist).
+ */
+export async function sendPasswordReset(email: string): Promise<void> {
+  if (!supabaseConfigured) {
+    throw new AuthError('Password reset is only available on the live app.');
+  }
+  const redirectTo =
+    typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) throw new AuthError(error.message);
+}
+
+/** Set a new password for the recovering session, then clear the recovery flag. */
+export async function updatePassword(newPassword: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw new AuthError(error.message);
+  useAuthStore.getState().setPasswordRecovery(false);
+}
+
+/**
  * Called once at app boot. Restores the session if Supabase has one cached,
  * fetches the profile, and hydrates the store. Always finishes with
  * status = 'ready' so guards can stop waiting.
@@ -115,6 +136,12 @@ export function subscribeToAuthChanges(): () => void {
   }
 
   const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      // Arrived from a reset link — flag it so the app routes to /reset-password
+      // instead of treating this as a normal sign-in.
+      useAuthStore.getState().setPasswordRecovery(true);
+      return;
+    }
     if (event === 'SIGNED_OUT' || !session?.user) {
       useAuthStore.getState().clear();
       return;

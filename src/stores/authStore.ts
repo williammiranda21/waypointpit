@@ -23,8 +23,11 @@ interface AuthState {
   user: AuthUser | null;
   status: AuthStatus;
   isAuthenticated: boolean;
+  /** True while the user arrived via a password-recovery link and must set a new password. */
+  passwordRecovery: boolean;
   setUser: (user: AuthUser | null) => void;
   setStatus: (status: AuthStatus) => void;
+  setPasswordRecovery: (value: boolean) => void;
   setLanguage: (lang: SupportedLanguage) => void;
   clear: () => void;
 }
@@ -35,8 +38,10 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       status: 'loading',
       isAuthenticated: false,
+      passwordRecovery: false,
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setStatus: (status) => set({ status }),
+      setPasswordRecovery: (value) => set({ passwordRecovery: value }),
       setLanguage: (lang) => {
         const current = get().user;
         if (!current) return;

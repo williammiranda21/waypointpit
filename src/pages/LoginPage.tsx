@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { AuthError, signInWithEmail } from '@/lib/auth';
+import { AuthError, signInWithEmail, sendPasswordReset } from '@/lib/auth';
 import { supabaseConfigured } from '@/lib/supabase';
 import type { SupportedLanguage } from '@/i18n';
 
@@ -21,6 +21,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,12 +50,23 @@ export function LoginPage() {
     void i18n.changeLanguage(next);
   };
 
-  const showForgotHelp = () => {
-    // Per Phase 2: accounts are provisioned by the CoC Admin. We don't
-    // offer self-service reset.
-    setError(
-      'Password resets are handled by your CoC Admin. Contact them to receive a new temporary password.',
-    );
+  const handleForgot = async () => {
+    setError(null);
+    setNotice(null);
+    if (!supabaseConfigured) {
+      setError('Demo mode — password resets are handled by your CoC Admin.');
+      return;
+    }
+    if (!email.trim()) {
+      setError('Enter your email above, then tap “Forgot password”.');
+      return;
+    }
+    try {
+      await sendPasswordReset(email.trim());
+      setNotice('If that email has an account, a password-reset link is on its way. Check your inbox.');
+    } catch (err) {
+      setError(err instanceof AuthError ? err.message : 'Could not send the reset email. Try again.');
+    }
   };
 
   return (
@@ -125,6 +137,11 @@ export function LoginPage() {
                 {error}
               </p>
             )}
+            {notice && (
+              <p className="text-sm text-primary" role="status">
+                {notice}
+              </p>
+            )}
 
             <Button type="submit" fullWidth size="lg" disabled={busy}>
               {busy ? t('login.signingIn') : t('login.signIn')}
@@ -133,7 +150,7 @@ export function LoginPage() {
             <div className="text-center">
               <button
                 type="button"
-                onClick={showForgotHelp}
+                onClick={handleForgot}
                 className="text-sm font-medium text-primary hover:text-primary-hover"
               >
                 {t('login.forgotPassword')}
