@@ -101,7 +101,13 @@ export function VolunteerTopBar({ teamName, zoneName }: VolunteerTopBarProps) {
             className="absolute right-0 top-0 h-full w-72 max-w-[80vw] bg-white shadow-xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-wp-border px-4 h-14">
+            <div
+              className="flex items-center justify-between border-b border-wp-border px-4"
+              style={{
+                height: 'calc(3.5rem + env(safe-area-inset-top))',
+                paddingTop: 'env(safe-area-inset-top)',
+              }}
+            >
               <span className="text-sm font-semibold text-text-primary">{t('volunteer.menu')}</span>
               <button
                 type="button"
@@ -139,7 +145,10 @@ export function VolunteerTopBar({ teamName, zoneName }: VolunteerTopBarProps) {
                 </div>
               )}
             </div>
-            <div className="border-t border-wp-border p-3">
+            <div
+              className="border-t border-wp-border px-3 pt-3"
+              style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+            >
               <button
                 type="button"
                 onClick={handleLogout}

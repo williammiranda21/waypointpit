@@ -153,7 +153,7 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
         })}
       </nav>
 
-      <div className="p-3">
+      <div className="p-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
         <div className={cn('flex items-center gap-3', collapsed && 'justify-center')}>
           <div className="h-9 w-9 rounded-full bg-primary text-white text-sm font-semibold inline-flex items-center justify-center shrink-0">
             {initials}
